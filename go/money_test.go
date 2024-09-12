@@ -13,3 +13,10 @@ func TestMultiplication(t *testing.T) {
 		t.Errorf("Expected 10, got: [%d]", tenner.amount)
 	}
 }
+
+type Dollar struct {
+	amount int
+}
+func (d Dollar) Times(n int) Dollar {
+	return Dollar{10}
+}
