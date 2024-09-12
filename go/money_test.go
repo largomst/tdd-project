@@ -17,6 +17,7 @@ func TestMultiplication(t *testing.T) {
 type Dollar struct {
 	amount int
 }
-func (d Dollar) Times(n int) Dollar {
-	return Dollar{10}
+
+func (d Dollar) Times(multiplier int) Dollar {
+	return Dollar{d.amount * multiplier}
 }
