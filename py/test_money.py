@@ -52,7 +52,7 @@ class TestMoney(unittest.TestCase):
         portofolio.add(oneDollar, oneEuro, oneWon)
         with self.assertRaisesRegex(
             Exception,
-            "Missing exchange rate\(s\):\[USD->Kalganid,EUR->Kalganid,KRW->Kalganid\]",
+            r"Missing exchange rate\(s\):\[USD->Kalganid,EUR->Kalganid,KRW->Kalganid\]",
         ):
             portofolio.evaluate("Kalganid")
 
