@@ -14,13 +14,11 @@ class Money {
 }
 
 let fiver = new Money(5, "USD");
-let tener = fiver.times(2);
-assert.strictEqual(tener.amount, 10);
+assert.strictEqual((fiver.times(2)).amount, 10);
 
 let tenEuros = new Money(10, "EUR");
-let twentyEuros = tenEuros.times(2);
-assert.strictEqual(twentyEuros.amount, 20);
-assert.strictEqual(twentyEuros.currency, "EUR");
+assert.strictEqual((tenEuros.times(2)).amount, 20);
+assert.strictEqual((tenEuros.times(2)).currency, "EUR");
 
 let originalMoney = new Money(4002, "KRW");
 let actualMoneyAfterDivision = originalMoney.divide(4);
