@@ -6,28 +6,22 @@ import (
 )
 
 func TestMultiplicationDollar(t *testing.T) {
-	five := s.Money{
-		amount:   5,
-		currency: "USD",
-	}
+	five := s.NewMoney(5, "USD")
 	actualResult := five.Times(2)
-	expectedResult := s.Money{
-		amount:   10,
-		currency: "USD",
-	}
+	expectedResult := s.NewMoney(10, "USD")
 	assertEqual(t, expectedResult, actualResult)
 }
 func TestMultiplicationInEuros(t *testing.T) {
-	tenEuros := s.Money{amount: 10, currency: "EUR"}
+	tenEuros := s.NewMoney(10, "EUR")
 	actualResult := tenEuros.Times(2)
-	expectedResult := s.Money{amount: 20, currency: "EUR"}
+	expectedResult := s.NewMoney(20, "EUR")
 	assertEqual(t, expectedResult, actualResult)
 }
 
 func TestDivision(t *testing.T) {
-	originalMoney := s.Money{amount: 4002, currency: "KRW"}
+	originalMoney := s.NewMoney(4002, "KRW")
 	actualMoneyAfterDivision := originalMoney.Divide(4)
-	expectedMoneyAfterDivision := s.Money{amount: 1000.5, currency: "KRW"}
+	expectedMoneyAfterDivision := s.NewMoney(1000.5, "KRW")
 	assertEqual(t, expectedMoneyAfterDivision, actualMoneyAfterDivision)
 }
 
@@ -35,9 +29,9 @@ func TestAddition(t *testing.T) {
 	var portfolio s.Portfolio
 	var portfolioDollars s.Money
 
-	fiveDollars := s.Money{amount: 5, currency: "USD"}
-	tenDollars := s.Money{amount: 10, currency: "USD"}
-	fifteenDollars := s.Money{amount: 15, currency: "USD"}
+	fiveDollars := s.NewMoney(5, "USD")
+	tenDollars := s.NewMoney(10, "USD")
+	fifteenDollars := s.NewMoney(15, "USD")
 
 	portfolio = portfolio.Add(fiveDollars, tenDollars)
 	portfolioDollars = portfolio.Evaluate("USD")
