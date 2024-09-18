@@ -1,81 +1,127 @@
 package main
 
 import (
+	"reflect"
+	s "tdd/stocks"
 	"testing"
 )
 
-func TestMultiplicationDollar(t *testing.T) {
-	five := Money{
-		amount:   5,
-		currency: "USD",
-	}
-	actualResult := five.Times(2)
-	expectedResult := Money{
-		amount:   10,
-		currency: "USD",
-	}
-	assertEqual(t, expectedResult, actualResult)
-}
-func TestMultiplicationInEuros(t *testing.T) {
-	tenEuros := Money{amount: 10, currency: "EUR"}
+func TestMultiplication(t *testing.T) {
+	tenEuros := s.NewMoney(10, "EUR")
 	actualResult := tenEuros.Times(2)
-	expectedResult := Money{amount: 20, currency: "EUR"}
+	expectedResult := s.NewMoney(20, "EUR")
 	assertEqual(t, expectedResult, actualResult)
 }
 
 func TestDivision(t *testing.T) {
-	originalMoney := Money{amount: 4002, currency: "KRW"}
+	originalMoney := s.NewMoney(4002, "KRW")
 	actualMoneyAfterDivision := originalMoney.Divide(4)
-	expectedMoneyAfterDivision := Money{amount: 1000.5, currency: "KRW"}
+	expectedMoneyAfterDivision := s.NewMoney(1000.5, "KRW")
 	assertEqual(t, expectedMoneyAfterDivision, actualMoneyAfterDivision)
 }
 
 func TestAddition(t *testing.T) {
-	var portfolio Portfolio
-	var portfolioDollars Money
+	initExchangeRates()
+	var portfolio s.Portfolio
+	var portfolioDollars *s.Money
 
-	fiveDollars := Money{amount: 5, currency: "USD"}
-	tenDollars := Money{amount: 10, currency: "USD"}
-	fifteenDollars := Money{amount: 15, currency: "USD"}
+	fiveDollars := s.NewMoney(5, "USD")
+	tenDollars := s.NewMoney(10, "USD")
+	fifteenDollars := s.NewMoney(15, "USD")
 
 	portfolio = portfolio.Add(fiveDollars, tenDollars)
-	portfolioDollars = portfolio.Evaluate("USD")
+	portfolioDollars, err := portfolio.Evaluate(bank, "USD")
 
-	assertEqual(t, fifteenDollars, portfolioDollars)
+	assertNil(t, err)
+	assertEqual(t, fifteenDollars, *portfolioDollars)
 }
 
-func assertEqual(t *testing.T, expected Money, actual Money) {
+func assertEqual(t *testing.T, expected interface{}, actual interface{}) {
 	if expected != actual {
 		t.Errorf("Expected %+v Got %+v", expected, actual)
 	}
 }
 
-type Money struct {
-	amount   float64
-	currency string
+func TestAdditionOfDollarsAndEuros(t *testing.T) {
+	initExchangeRates()
+	var portfolio s.Portfolio
+	fiveDollars := s.NewMoney(5, "USD")
+	tenEuros := s.NewMoney(10, "EUR")
+	portfolio = portfolio.Add(fiveDollars, tenEuros)
+
+	expectedResult := s.NewMoney(17, "USD")
+	actualResult, _ := portfolio.Evaluate(bank, "USD")
+
+	assertEqual(t, expectedResult, *actualResult)
+
 }
 
-func (m Money) Times(multiplier int) Money {
-	return Money{m.amount * float64(multiplier), m.currency}
+func TestAdditionDollarsAndWons(t *testing.T) {
+	var portfolio s.Portfolio
+
+	fiveDollars := s.NewMoney(1, "USD")
+	elevenHundredDollars := s.NewMoney(1100, "KRW")
+	portfolio = portfolio.Add(fiveDollars, elevenHundredDollars)
+
+	expectedValue := s.NewMoney(2200, "KRW")
+	actualValue, _ := portfolio.Evaluate(bank, "KRW")
+
+	assertEqual(t, expectedValue, *actualValue)
 }
 
-func (m Money) Divide(divisor int) Money {
-	return Money{m.amount / float64(divisor), m.currency}
+func TestAdditionWithMultipleMissExchangeRates(t *testing.T) {
+	initExchangeRates()
+	var portfolio s.Portfolio
+
+	oneDollar := s.NewMoney(1, "USD")
+	oneEuro := s.NewMoney(1, "EUR")
+	oneWon := s.NewMoney(1, "KRW")
+
+	portfolio = portfolio.Add(oneDollar, oneEuro, oneWon)
+
+	expectErrorMessage :=
+		"Missing exchange rate(s):[USD->Kalganid,EUR->Kalganid,KRW->Kalganid,]"
+	_, actualErro := portfolio.Evaluate(bank, "Kalganid")
+
+	assertEqual(t, expectErrorMessage, actualErro.Error())
 }
 
-type Portfolio []Money
+func TestConversionWithDifferentRatesBetweenTwoCurrenceis(t *testing.T) {
+	initExchangeRates()
+	tenEuros := s.NewMoney(10, "EUR")
+	actualConvertedMoney, err := bank.Convert(tenEuros, "USD")
+	assertNil(t, err)
+	assertEqual(t, s.NewMoney(12, "USD"), *actualConvertedMoney)
+	bank.AddExchangeRate("EUR", "USD", 1.3)
+	actualConvertedMoney, err = bank.Convert(tenEuros, "USD")
+	assertNil(t, err)
+	assertEqual(t, s.NewMoney(13, "USD"), *actualConvertedMoney)
+}
 
-func (p Portfolio) Add(moneys ...Money) Portfolio {
-	for _, money := range moneys {
-		p = append(p, money)
+func TestWhatIsTheConversionRateFromEURToUSD(t *testing.T) {
+	initExchangeRates()
+	tenEuros := s.NewMoney(10, "EUR")
+	actualConvertedMoney, err := bank.Convert(tenEuros, "USD")
+	assertNil(t, err)
+	assertEqual(t, s.NewMoney(12, "USD"), *actualConvertedMoney)
+}
+
+func assertNil(t *testing.T, actual interface{}) {
+	if actual != nil && !reflect.ValueOf(actual).IsNil() {
+		t.Errorf("Expected to be nil, found: [%+v]", actual)
 	}
-	return p
+}
+func TestConversionWithMissingExchangeRate(t *testing.T) {
+	initExchangeRates()
+	tenEuros := s.NewMoney(10, "EUR")
+	actualConvertedMoney, _ := bank.Convert(tenEuros, "Kalganid")
+	assertNil(t, actualConvertedMoney)
 }
 
-func (p Portfolio) Evaluate(currency string) Money {
-	total := 0.0
-	for _, m := range p {
-		total += m.amount
-	}
-	return Money{amount: total, currency: currency}
+var bank s.Bank
+
+func initExchangeRates() {
+	bank = s.NewBank()
+	bank.AddExchangeRate("EUR", "USD", 1.2)
+	bank.AddExchangeRate("USD", "KRW", 1100)
 }

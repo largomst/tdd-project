@@ -1,0 +1,26 @@
+name: Go CI
+on:
+  push:
+    branches: [master]
+jobs:
+  build:
+    name: Build
+    strategy:
+      matrix:
+        platform: [ubuntu-latest, macos-latest, windows-latest]
+        go-version: [1.22.3]
+    runs-on: ${{matrix.platform}}
+    steps:
+      - name: Set up Go ${{matrix.go-version}}
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{matrix.go-version}}
+      - name: Checkout out code
+        uses: actions/checkout@v2
+      - name: Test
+        run: |
+          export GO111MODULE="on"
+          export GOPATH=""
+          cd go
+          go test -v ./...
+        shell: bash
