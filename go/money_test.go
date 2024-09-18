@@ -21,6 +21,7 @@ func TestDivision(t *testing.T) {
 }
 
 func TestAddition(t *testing.T) {
+	initExchangeRates()
 	var portfolio s.Portfolio
 	var portfolioDollars *s.Money
 
@@ -42,6 +43,7 @@ func assertEqual(t *testing.T, expected interface{}, actual interface{}) {
 }
 
 func TestAdditionOfDollarsAndEuros(t *testing.T) {
+	initExchangeRates()
 	var portfolio s.Portfolio
 	fiveDollars := s.NewMoney(5, "USD")
 	tenEuros := s.NewMoney(10, "EUR")
@@ -68,6 +70,7 @@ func TestAdditionDollarsAndWons(t *testing.T) {
 }
 
 func TestAdditionWithMultipleMissExchangeRates(t *testing.T) {
+	initExchangeRates()
 	var portfolio s.Portfolio
 
 	oneDollar := s.NewMoney(1, "USD")
@@ -83,9 +86,20 @@ func TestAdditionWithMultipleMissExchangeRates(t *testing.T) {
 	assertEqual(t, expectErrorMessage, actualErro.Error())
 }
 
-func TestConversion(t *testing.T) {
-	bank := s.NewBank()
-	bank.AddExchangeRate("EUR", "USD", 1.2)
+func TestConversionWithDifferentRatesBetweenTwoCurrenceis(t *testing.T) {
+	initExchangeRates()
+	tenEuros := s.NewMoney(10, "EUR")
+	actualConvertedMoney, err := bank.Convert(tenEuros, "USD")
+	assertNil(t, err)
+	assertEqual(t, s.NewMoney(12, "USD"), *actualConvertedMoney)
+	bank.AddExchangeRate("EUR", "USD", 1.3)
+	actualConvertedMoney, err = bank.Convert(tenEuros, "USD")
+	assertNil(t, err)
+	assertEqual(t, s.NewMoney(13, "USD"), *actualConvertedMoney)
+}
+
+func TestWhatIsTheConversionRateFromEURToUSD(t *testing.T) {
+	initExchangeRates()
 	tenEuros := s.NewMoney(10, "EUR")
 	actualConvertedMoney, err := bank.Convert(tenEuros, "USD")
 	assertNil(t, err)
@@ -98,7 +112,7 @@ func assertNil(t *testing.T, actual interface{}) {
 	}
 }
 func TestConversionWithMissingExchangeRate(t *testing.T) {
-	bank := s.NewBank()
+	initExchangeRates()
 	tenEuros := s.NewMoney(10, "EUR")
 	actualConvertedMoney, _ := bank.Convert(tenEuros, "Kalganid")
 	assertNil(t, actualConvertedMoney)
@@ -106,7 +120,7 @@ func TestConversionWithMissingExchangeRate(t *testing.T) {
 
 var bank s.Bank
 
-func init() {
+func initExchangeRates() {
 	bank = s.NewBank()
 	bank.AddExchangeRate("EUR", "USD", 1.2)
 	bank.AddExchangeRate("USD", "KRW", 1100)
